@@ -1,3 +1,7 @@
+# GoLand
+.DS_Store
+/.idea/
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -13,3 +17,9 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+#Project files
+config.yml
+tmp/*
+.env
+.cache

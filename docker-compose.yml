@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+
+  go_rss_reader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rss_reader
+    ports:
+      - ${HTTP_RSS_PORT}:${HTTP_RSS_PORT}
+    volumes:
+      - ./:/app:delegated
+    networks:
+      - proxynet
+
+networks:
+  proxynet:
+    name: rss_network

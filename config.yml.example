@@ -1,0 +1,7 @@
+listen_http:
+  port: 8080
+rabbit:
+  host: rabbitmq
+  port: 5672
+  username: guest
+  password: guest
