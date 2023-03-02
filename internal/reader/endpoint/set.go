@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
-	"github.com/gookit/validate"
 	"github.com/simplexpage/rss-reader/internal/reader/domain/service"
 )
 
@@ -27,9 +26,4 @@ func MakeParseUrlsEndpoint(s service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		return
 	}
-}
-
-type FailedAndValidation interface {
-	Failed() error
-	Validation() validate.Errors
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/oklog/pkg/group"
 	"github.com/simplexpage/rss-reader/internal/reader/config"
+	"github.com/simplexpage/rss-reader/internal/reader/delivery/transport"
 	"github.com/simplexpage/rss-reader/internal/reader/domain/service"
 	"github.com/simplexpage/rss-reader/internal/reader/endpoint"
 	"net"
@@ -47,11 +48,11 @@ func main() {
 	{
 		httpListener, err := net.Listen("tcp", *httpAddr)
 		if err != nil {
-			level.Info(logger).Log("transport", "HTTP", "during", "Listen", "err", err)
+			level.Info(logger).Log("delivery", "HTTP", "during", "Listen", "err", err)
 			os.Exit(1)
 		}
 		g.Add(func() error {
-			level.Info(logger).Log("transport", "HTTP", "addr", *httpAddr)
+			level.Info(logger).Log("delivery", "HTTP", "addr", *httpAddr)
 			return http.Serve(httpListener, readerHttpHandler)
 		}, func(error) {
 			httpListener.Close()

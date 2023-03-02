@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/go-kit/kit v0.12.0
 	github.com/gookit/validate v1.4.6
+	github.com/gorilla/mux v1.8.0
 	github.com/ilyakaznacheev/cleanenv v1.4.2
 	github.com/oklog/oklog v0.3.2
 )
