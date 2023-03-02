@@ -1,6 +1,7 @@
 package transport
 
 import (
+	httpUtil "github.com/simplexpage/rss-reader/pkg/transport/http"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +17,7 @@ func TestHealthCheckHandler(t *testing.T) {
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(HealthCheckHandler)
+	handler := http.HandlerFunc(httpUtil.HealthCheckHandler)
 
 	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
 	// directly and pass in our Request and ResponseRecorder.

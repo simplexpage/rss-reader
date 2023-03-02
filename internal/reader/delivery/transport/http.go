@@ -8,11 +8,17 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/simplexpage/rss-reader/internal/reader/endpoint"
 	httpUtil "github.com/simplexpage/rss-reader/pkg/transport/http"
+	httpMiddleware "github.com/simplexpage/rss-reader/pkg/transport/http/middleware"
 	"net/http"
 )
 
 func NewHTTPHandler(endpoints endpoint.Set, logger log.Logger) http.Handler {
 	r := mux.NewRouter()
+
+	// CORS
+	r.Use(mux.CORSMethodMiddleware(r))
+	corsMiddleware := httpMiddleware.NewCorsMiddleware()
+	r.Use(corsMiddleware.Middleware)
 
 	options := []httpKitTransport.ServerOption{
 		httpKitTransport.ServerErrorHandler(transport.NewLogErrorHandler(logger)),
