@@ -8,6 +8,7 @@ import (
 	"github.com/oklog/oklog/pkg/group"
 	"github.com/simplexpage/rss-reader/internal/reader/config"
 	"github.com/simplexpage/rss-reader/internal/reader/domain/service"
+	"github.com/simplexpage/rss-reader/internal/reader/endpoint"
 	"net"
 	"net/http"
 	"os"
