@@ -2,10 +2,12 @@ package transport
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/transport"
 	httpKitTransport "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
+	"github.com/simplexpage/rss-reader/internal/reader/delivery/reqresp"
 	"github.com/simplexpage/rss-reader/internal/reader/endpoint"
 	httpUtil "github.com/simplexpage/rss-reader/pkg/transport/http"
 	httpMiddleware "github.com/simplexpage/rss-reader/pkg/transport/http/middleware"
@@ -43,5 +45,9 @@ func NewHTTPHandler(endpoints endpoint.Set, logger log.Logger) http.Handler {
 }
 
 func decodeHttpParseRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	return
+	var req reqresp.ParseUrlsRequest
+	if e := json.NewDecoder(r.Body).Decode(&req.ParseUrlsForm); e != nil {
+		return nil, e
+	}
+	return req, nil
 }
