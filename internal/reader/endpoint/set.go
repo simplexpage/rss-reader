@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
+	"github.com/simplexpage/rss-reader/internal/reader/delivery/reqresp"
 	"github.com/simplexpage/rss-reader/internal/reader/domain/service"
 )
 
@@ -24,6 +25,8 @@ func NewServerEndpoints(s service.Service, logger log.Logger) Set {
 
 func MakeParseUrlsEndpoint(s service.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		return
+		req := request.(reqresp.ParseUrlsRequest)
+		items, err, errV := s.ParseUrls(ctx, req.ParseUrlsForm)
+		return reqresp.ParseUrlsResponse{Items: AdapterItems(items), Err: err, ValidationErr: errV}, nil
 	}
 }

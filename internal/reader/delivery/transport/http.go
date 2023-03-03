@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/simplexpage/rss-reader/internal/reader/delivery/reqresp"
 	"github.com/simplexpage/rss-reader/internal/reader/endpoint"
+	"github.com/simplexpage/rss-reader/pkg/errors"
 	httpUtil "github.com/simplexpage/rss-reader/pkg/transport/http"
 	httpMiddleware "github.com/simplexpage/rss-reader/pkg/transport/http/middleware"
 	"net/http"
@@ -47,7 +48,7 @@ func NewHTTPHandler(endpoints endpoint.Set, logger log.Logger) http.Handler {
 func decodeHttpParseRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
 	var req reqresp.ParseUrlsRequest
 	if e := json.NewDecoder(r.Body).Decode(&req.ParseUrlsForm); e != nil {
-		return nil, e
+		return nil, errors.ErrDataValidation
 	}
 	return req, nil
 }
