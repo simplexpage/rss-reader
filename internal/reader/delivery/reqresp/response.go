@@ -10,7 +10,7 @@ type ParseUrlsResponse struct {
 
 type Item struct {
 	Title       string `json:"title,omitempty"`
-	Source      string `json:"link,omitempty"`
+	Source      string `json:"source,omitempty"`
 	SourceUrl   string `json:"source_url,omitempty"`
 	Link        string `json:"link,omitempty"`
 	PublishDate string `json:"publish_date,omitempty"`

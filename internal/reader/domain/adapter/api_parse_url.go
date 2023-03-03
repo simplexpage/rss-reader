@@ -18,7 +18,7 @@ func (p *ParseUrlPackageAdapter) GetApiData(urls []string) ([]model.Item, error)
 	if err != nil {
 		return nil, err
 	}
-	items := make([]model.Item, len(rssItems))
+	items := make([]model.Item, 0)
 	for _, rssItem := range rssItems {
 		items = append(items, model.Item{
 			Title:       rssItem.Title,
@@ -29,7 +29,6 @@ func (p *ParseUrlPackageAdapter) GetApiData(urls []string) ([]model.Item, error)
 			SourceUrl:   rssItem.SourceURL,
 		})
 	}
-
 	return items, nil
 }
 

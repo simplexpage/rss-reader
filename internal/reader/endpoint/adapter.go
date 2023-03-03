@@ -6,7 +6,7 @@ import (
 )
 
 func AdapterItems(items []model.Item) []reqresp.Item {
-	itemsAdapter := make([]reqresp.Item, len(items))
+	itemsAdapter := make([]reqresp.Item, 0)
 	for _, item := range items {
 		itemsAdapter = append(itemsAdapter, reqresp.Item{
 			Title:       item.Title,
