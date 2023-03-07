@@ -10,27 +10,30 @@ import (
 	"github.com/simplexpage/rss-reader/pkg/errors"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock_service.go -package=mocks
 type Service interface {
 	ParseUrls(ctx context.Context, parseUrlsForm form.ParseUrlsForm) ([]model.Item, error, validate.Errors)
 }
 
-func New(logger log.Logger) Service {
+func New(logger log.Logger, parseUrlService adapter.APIParseUrlService) Service {
 	var service Service
 	{
-		service = NewReaderService(logger)
+		service = NewReaderService(logger, parseUrlService)
 		service = LoggingMiddleware(logger)(service)
 	}
 	return service
 }
 
-func NewReaderService(logger log.Logger) Service {
+func NewReaderService(logger log.Logger, parseUrlService adapter.APIParseUrlService) Service {
 	return &readerService{
-		logger: logger,
+		logger:          logger,
+		parseUrlService: parseUrlService,
 	}
 }
 
 type readerService struct {
-	logger log.Logger
+	logger          log.Logger
+	parseUrlService adapter.APIParseUrlService
 }
 
 func (r *readerService) ParseUrls(ctx context.Context, parseUrlsForm form.ParseUrlsForm) ([]model.Item, error, validate.Errors) {
@@ -39,14 +42,9 @@ func (r *readerService) ParseUrls(ctx context.Context, parseUrlsForm form.ParseU
 		return nil, errors.ErrDataValidation, validationReq.Errors
 	}
 
-	parseUrlPackageAdapter := adapter.ParseUrlPackageAdapter{ParseUrlPackage: &adapter.ParseUrlPackage{}}
-	items, err := r.getApiDataUrls(&parseUrlPackageAdapter, parseUrlsForm.Urls)
+	items, err := r.parseUrlService.GetApiData(ctx, parseUrlsForm.Urls)
 	if err != nil {
 		return nil, err, nil
 	}
 	return items, nil, nil
-}
-
-func (r *readerService) getApiDataUrls(api adapter.APIParseUrl, urls []string) ([]model.Item, error) {
-	return api.GetApiData(urls)
 }

@@ -1,12 +1,12 @@
-start_local:
+start:
 	docker-compose up
 
-stop_local:
-	docker-compose down
-
-start_local_rebuild:
+rebuild:
 	docker system prune
 	docker-compose up --build
+
+stop:
+	docker-compose down
 
 console:
 	docker exec -ti rss_reader bash

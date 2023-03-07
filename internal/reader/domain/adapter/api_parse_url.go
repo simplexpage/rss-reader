@@ -1,20 +1,28 @@
 package adapter
 
 import (
+	"context"
 	rssparser "github.com/simplexpage/rss-parser"
 	"github.com/simplexpage/rss-reader/internal/reader/domain/model"
 )
 
-type APIParseUrl interface {
-	GetApiData(urls []string) ([]model.Item, error)
+//go:generate mockgen -source=api_parse_url.go -destination=mocks/mock_api_parse_url.go -package=mocks
+type APIParseUrlService interface {
+	GetApiData(ctx context.Context, urls []string) ([]model.Item, error)
 }
 
-type ParseUrlPackageAdapter struct {
-	ParseUrlPackage *ParseUrlPackage
+type parseUrlPackageAdapter struct {
+	parseUrlPackage *ParseUrlPackage
 }
 
-func (p *ParseUrlPackageAdapter) GetApiData(urls []string) ([]model.Item, error) {
-	rssItems, err := p.ParseUrlPackage.ParseURLs(urls)
+func NewParseUrlPackageAdapter() APIParseUrlService {
+	return &parseUrlPackageAdapter{
+		parseUrlPackage: &ParseUrlPackage{},
+	}
+}
+
+func (p *parseUrlPackageAdapter) GetApiData(ctx context.Context, urls []string) ([]model.Item, error) {
+	rssItems, err := p.parseUrlPackage.ParseURLs(urls)
 	if err != nil {
 		return nil, err
 	}

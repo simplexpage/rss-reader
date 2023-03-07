@@ -8,6 +8,7 @@ import (
 	"github.com/oklog/oklog/pkg/group"
 	"github.com/simplexpage/rss-reader/internal/reader/config"
 	"github.com/simplexpage/rss-reader/internal/reader/delivery/transport"
+	"github.com/simplexpage/rss-reader/internal/reader/domain/adapter"
 	"github.com/simplexpage/rss-reader/internal/reader/domain/service"
 	"github.com/simplexpage/rss-reader/internal/reader/endpoint"
 	"net"
@@ -39,9 +40,10 @@ func main() {
 	fs.Parse(os.Args[1:])
 
 	var (
-		readerService     = service.New(logger)
-		readerEndpoints   = endpoint.NewServerEndpoints(readerService, logger)
-		readerHttpHandler = transport.NewHTTPHandler(readerEndpoints, log.With(logger, "component", "HTTP"))
+		parseUrlPackageAdapter = adapter.NewParseUrlPackageAdapter()
+		readerService          = service.New(logger, parseUrlPackageAdapter)
+		readerEndpoints        = endpoint.NewServerEndpoints(readerService, logger)
+		readerHttpHandler      = transport.NewHTTPHandler(readerEndpoints, log.With(logger, "component", "HTTP"))
 	)
 
 	var g group.Group
