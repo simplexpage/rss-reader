@@ -1,11 +1,13 @@
 package transport
 
 import (
+	"errors"
 	"github.com/go-kit/kit/log"
 	"github.com/golang/mock/gomock"
+	"github.com/gookit/validate"
 	"github.com/simplexpage/rss-reader/internal/reader/delivery/reqresp/form"
-	"github.com/simplexpage/rss-reader/internal/reader/domain/adapter"
-	"github.com/simplexpage/rss-reader/internal/reader/domain/service"
+	"github.com/simplexpage/rss-reader/internal/reader/domain/model"
+	"github.com/simplexpage/rss-reader/internal/reader/domain/service/mocks"
 	"github.com/simplexpage/rss-reader/internal/reader/endpoint"
 	httpUtil "github.com/simplexpage/rss-reader/pkg/transport/http"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +16,95 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestParseUrlsHandlerSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	inputParseUrls := `{"urls":["https://tsn.ua/rss/full.rss"]}`
+	inputParseUrlsFormMock := form.ParseUrlsForm{
+		Urls: []string{"https://tsn.ua/rss/full.rss"},
+	}
+	mockResponse := []model.Item{
+		{
+			Title:       "title",
+			Source:      "source",
+			SourceUrl:   "sourceUrl",
+			Link:        "link",
+			PublishDate: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+			Description: "description",
+		},
+	}
+	expectedStatusCode := http.StatusOK
+	expectedResponse := `{"code":200,"data":{"items":[{"title":"title","source":"source","source_url":"sourceUrl","link":"link","publish_date":"2020-01-01 00:00:00","description":"description"}]},"message":"OK"}`
+
+	serviceReaderMock := mocks.NewMockService(ctrl)
+	serviceReaderMock.EXPECT().ParseUrls(gomock.Any(), inputParseUrlsFormMock).Return(mockResponse, nil, nil).Times(1)
+
+	serviceEndpoints := endpoint.NewServerEndpoints(serviceReaderMock, log.NewNopLogger())
+	serviceHttpHandler := NewHTTPHandler(serviceEndpoints, log.With(log.NewNopLogger(), "component", "HTTP"))
+	srv := httptest.NewServer(serviceHttpHandler)
+	defer srv.Close()
+
+	req, _ := http.NewRequest("POST", "/reader/parse", strings.NewReader(inputParseUrls))
+	w := httptest.NewRecorder()
+	serviceHttpHandler.ServeHTTP(w, req)
+	body, _ := ioutil.ReadAll(w.Body)
+
+	assert.Equal(t, expectedStatusCode, w.Code)
+	assert.Equal(t, expectedResponse, strings.TrimSpace(string(body)))
+}
+
+func TestParseUrlsHandlerValidateError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	inputParseUrls := `{"urls":[]}`
+	var mockResponse []model.Item
+	expectedStatusCode := http.StatusUnprocessableEntity
+	expectedResponse := `{"code":422,"data":{},"message":"data validation failed"}`
+
+	serviceReaderMock := mocks.NewMockService(ctrl)
+	serviceReaderMock.EXPECT().ParseUrls(gomock.Any(), gomock.Any()).Return(mockResponse, errors.New("data validation failed"), validate.Errors{}).Times(1)
+
+	serviceEndpoints := endpoint.NewServerEndpoints(serviceReaderMock, log.NewNopLogger())
+	serviceHttpHandler := NewHTTPHandler(serviceEndpoints, log.With(log.NewNopLogger(), "component", "HTTP"))
+	srv := httptest.NewServer(serviceHttpHandler)
+	defer srv.Close()
+
+	req, _ := http.NewRequest("POST", "/reader/parse", strings.NewReader(inputParseUrls))
+	w := httptest.NewRecorder()
+	serviceHttpHandler.ServeHTTP(w, req)
+	body, _ := ioutil.ReadAll(w.Body)
+
+	assert.Equal(t, expectedStatusCode, w.Code)
+	assert.Equal(t, expectedResponse, strings.TrimSpace(string(body)))
+}
+
+func TestParseUrlsHandlerError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	expectedStatusCode := http.StatusUnprocessableEntity
+	expectedResponse := `{"code":422,"data":[],"message":"data validation failed"}`
+
+	serviceReaderMock := mocks.NewMockService(ctrl)
+
+	serviceEndpoints := endpoint.NewServerEndpoints(serviceReaderMock, log.NewNopLogger())
+	serviceHttpHandler := NewHTTPHandler(serviceEndpoints, log.With(log.NewNopLogger(), "component", "HTTP"))
+	srv := httptest.NewServer(serviceHttpHandler)
+	defer srv.Close()
+
+	req, _ := http.NewRequest("POST", "/reader/parse", strings.NewReader(""))
+	w := httptest.NewRecorder()
+	serviceHttpHandler.ServeHTTP(w, req)
+	body, _ := ioutil.ReadAll(w.Body)
+
+	assert.Equal(t, expectedStatusCode, w.Code)
+	assert.Equal(t, expectedResponse, strings.TrimSpace(string(body)))
+}
 
 func TestHealthCheckHandler(t *testing.T) {
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
@@ -43,57 +133,5 @@ func TestHealthCheckHandler(t *testing.T) {
 	if rr.Body.String() != expected {
 		t.Errorf("handler returned unexpected body: got %v want %v",
 			rr.Body.String(), expected)
-	}
-}
-
-func TestParseUrlsHandler(t *testing.T) {
-	testTable := []struct {
-		name               string
-		inputParseUrls     string
-		parseUrlsForm      form.ParseUrlsForm
-		expectedResponse   string
-		expectedStatusCode int
-	}{
-		{
-			name:               "Empty body",
-			inputParseUrls:     ``,
-			expectedResponse:   `{"code":422,"data":[],"message":"data validation failed"}`,
-			expectedStatusCode: http.StatusUnprocessableEntity,
-		},
-		{
-			name:               "data validation",
-			inputParseUrls:     `{"urls":[]}`,
-			expectedResponse:   `{"code":422,"data":{"urls":{"required":"urls is required to not be empty"}},"message":"data validation failed"}`,
-			expectedStatusCode: http.StatusUnprocessableEntity,
-		},
-		{
-			name:               "success",
-			inputParseUrls:     `{"urls":["https://tsn.ua/rss/full.rss"]}`,
-			expectedResponse:   ``,
-			expectedStatusCode: http.StatusOK,
-		},
-	}
-
-	for _, testCase := range testTable {
-		t.Run(testCase.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			parseUrlPackageAdapter := adapter.NewParseUrlPackageAdapter()
-			serviceReader := service.New(log.NewNopLogger(), parseUrlPackageAdapter)
-			serviceEndpoints := endpoint.NewServerEndpoints(serviceReader, log.NewNopLogger())
-			serviceHttpHandler := NewHTTPHandler(serviceEndpoints, log.With(log.NewNopLogger(), "component", "HTTP"))
-			srv := httptest.NewServer(serviceHttpHandler)
-			defer srv.Close()
-
-			req, _ := http.NewRequest("POST", "/reader/parse", strings.NewReader(testCase.inputParseUrls))
-			w := httptest.NewRecorder()
-			serviceHttpHandler.ServeHTTP(w, req)
-			body, _ := ioutil.ReadAll(w.Body)
-
-			assert.Equal(t, testCase.expectedStatusCode, w.Code)
-			if testCase.expectedResponse != "" {
-				assert.Equal(t, testCase.expectedResponse, strings.TrimSpace(string(body)))
-			}
-		})
 	}
 }

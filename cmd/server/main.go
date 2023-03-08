@@ -17,9 +17,12 @@ import (
 	"os/signal"
 	"syscall"
 	"text/tabwriter"
+	"time"
 )
 
 func main() {
+
+	// Init logger
 	var logger log.Logger
 	{
 		logger = log.NewLogfmtLogger(os.Stderr)
@@ -27,25 +30,34 @@ func main() {
 		logger = log.With(logger, "caller", log.DefaultCaller)
 	}
 
+	// Init config
 	cfg := config.GetConfig(logger)
 
 	fs := flag.NewFlagSet("rss-reader", flag.ExitOnError)
 
 	var (
 		httpAddr = fs.String("http-addr", fmt.Sprintf(":%s", cfg.ListenHttp.Port), "HTTP listen address")
-		//queueDsn = fs.String("rabbitmq-url", fmt.Sprintf("amqp://%s:%s@%s:%s/", cfg.Rabbit.User, cfg.Rabbit.Password, cfg.Rabbit.Host, cfg.Rabbit.Port), "RabbitMQ DSN")
 	)
 
 	fs.Usage = usageFor(fs, os.Args[0]+" [flags]")
 	fs.Parse(os.Args[1:])
 
+	// Init packages
+	parseUrlPackage := adapter.NewParseUrlPackage(adapter.ParseTimeout{Duration: 10 * time.Second})
+	parseUrlService, err := adapter.NewParseUrlPackageService(parseUrlPackage)
+	if err != nil {
+		level.Info(logger).Log("during", "NewParseUrlPackageService", "err", err)
+		os.Exit(1)
+	}
+
+	// Init services
 	var (
-		parseUrlPackageAdapter = adapter.NewParseUrlPackageAdapter()
-		readerService          = service.New(logger, parseUrlPackageAdapter)
-		readerEndpoints        = endpoint.NewServerEndpoints(readerService, logger)
-		readerHttpHandler      = transport.NewHTTPHandler(readerEndpoints, log.With(logger, "component", "HTTP"))
+		readerService     = service.New(logger, parseUrlService)
+		readerEndpoints   = endpoint.NewServerEndpoints(readerService, logger)
+		readerHttpHandler = transport.NewHTTPHandler(readerEndpoints, log.With(logger, "component", "HTTP"))
 	)
 
+	// Init group
 	var g group.Group
 	{
 		httpListener, err := net.Listen("tcp", *httpAddr)

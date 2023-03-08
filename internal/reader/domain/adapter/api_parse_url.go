@@ -2,27 +2,33 @@ package adapter
 
 import (
 	"context"
+	"errors"
 	rssparser "github.com/simplexpage/rss-parser"
 	"github.com/simplexpage/rss-reader/internal/reader/domain/model"
+	"time"
 )
 
 //go:generate mockgen -source=api_parse_url.go -destination=mocks/mock_api_parse_url.go -package=mocks
-type APIParseUrlService interface {
+type ParseUrlService interface {
 	GetApiData(ctx context.Context, urls []string) ([]model.Item, error)
 }
 
-type parseUrlPackageAdapter struct {
-	parseUrlPackage *ParseUrlPackage
-}
-
-func NewParseUrlPackageAdapter() APIParseUrlService {
-	return &parseUrlPackageAdapter{
-		parseUrlPackage: &ParseUrlPackage{},
+func NewParseUrlPackageService(parseService interface{}) (ParseUrlService, error) {
+	switch parseService.(type) {
+	case ParseUrlPackageService:
+		return &parseUrlServiceAdapter{
+			parseService: parseService.(ParseUrlPackageService),
+		}, nil
 	}
+	return nil, errors.New("parseService is unknown type")
 }
 
-func (p *parseUrlPackageAdapter) GetApiData(ctx context.Context, urls []string) ([]model.Item, error) {
-	rssItems, err := p.parseUrlPackage.ParseURLs(urls)
+type parseUrlServiceAdapter struct {
+	parseService ParseUrlPackageService
+}
+
+func (p *parseUrlServiceAdapter) GetApiData(ctx context.Context, urls []string) ([]model.Item, error) {
+	rssItems, err := p.parseService.ParseURLs(ctx, urls)
 	if err != nil {
 		return nil, err
 	}
@@ -40,10 +46,35 @@ func (p *parseUrlPackageAdapter) GetApiData(ctx context.Context, urls []string) 
 	return items, nil
 }
 
-type ParseUrlPackage struct{}
+type ParseUrlPackageService interface {
+	ParseURLs(ctx context.Context, urls []string) ([]rssparser.RssItem, error)
+}
 
-func (p *ParseUrlPackage) ParseURLs(urls []string) ([]rssparser.RssItem, error) {
-	ls, err := rssparser.ParseURLs(urls)
+type ParseTimeout struct {
+	Duration time.Duration
+}
+
+type parseUrlPackage struct {
+	timeout ParseTimeout
+}
+
+func NewParseUrlPackage(timeout ParseTimeout) ParseUrlPackageService {
+	return &parseUrlPackage{
+		timeout: timeout,
+	}
+}
+
+func (p *parseUrlPackage) ParseURLs(ctx context.Context, urls []string) ([]rssparser.RssItem, error) {
+	var ls []rssparser.RssItem
+	var err error
+	if p.timeout.Duration > 0 {
+		ctxTime, cancel := context.WithTimeout(ctx, p.timeout.Duration)
+		defer cancel()
+		ls, err = rssparser.ParseURLs(ctxTime, urls)
+	} else {
+		ls, err = rssparser.ParseURLs(ctx, urls)
+	}
+
 	if err != nil {
 		return nil, err
 	}

@@ -13,26 +13,29 @@ For WINDOWS users - you have to install MAKE by your own.
 
 ## How to use it
 
-Run `make start_local` to start REST API. All containers will start automatically.
+Run `make start` to start REST API. All containers will start automatically.
+
+## First local start
+
+1. Create `.env` file in the root of the project and copy the contents of the `.env-local` file into it and make the necessary changes as needed.
+2. Also project has a `config` folder, which contains configuration files. You need to create a `сonfig.yml` file in the root of the project and copy the contents of the `config.yml.example` file and make the necessary changes as needed.
 
 ## How to stop it
 
-Run `make stop_local` to stop REST API. All containers will stop automatically.
+Run `make stop` to stop REST API. All containers will stop automatically.
 
-## Console commands
+## How to rebuild it
 
-Run `./tmp/main -queue` inside GO container to start queue daemon.
+Run `make rebuild` to rebuild REST API. All containers will rebuild automatically.
 
+## How to run tests
+
+Run `make test` to run tests.
 
 ## .env example DEV
 
 ```
 HTTP_RSS_PORT=8082
-
-RABBITMQ_HOST=rabbitmq
-RABBITMQ_PORT=5672
-RABBITMQ_DEFAULT_USER=guest
-RABBITMQ_DEFAULT_PASS=guest
 ```
 
 ## Parse urls
@@ -46,8 +49,8 @@ RABBITMQ_DEFAULT_PASS=guest
 ```json
 {
   "urls": [
-    "https://www.reddit.com/r/golang/.rss",
-    "https://www.reddit.com/r/golang/new/.rss"
+    "https://tsn.ua/rss/full.rss",
+    "https://www.pravda.com.ua/rus/rss/"
   ]
 }
 ```

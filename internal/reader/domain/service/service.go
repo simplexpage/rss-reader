@@ -15,7 +15,7 @@ type Service interface {
 	ParseUrls(ctx context.Context, parseUrlsForm form.ParseUrlsForm) ([]model.Item, error, validate.Errors)
 }
 
-func New(logger log.Logger, parseUrlService adapter.APIParseUrlService) Service {
+func New(logger log.Logger, parseUrlService adapter.ParseUrlService) Service {
 	var service Service
 	{
 		service = NewReaderService(logger, parseUrlService)
@@ -24,7 +24,7 @@ func New(logger log.Logger, parseUrlService adapter.APIParseUrlService) Service 
 	return service
 }
 
-func NewReaderService(logger log.Logger, parseUrlService adapter.APIParseUrlService) Service {
+func NewReaderService(logger log.Logger, parseUrlService adapter.ParseUrlService) Service {
 	return &readerService{
 		logger:          logger,
 		parseUrlService: parseUrlService,
@@ -33,7 +33,7 @@ func NewReaderService(logger log.Logger, parseUrlService adapter.APIParseUrlServ
 
 type readerService struct {
 	logger          log.Logger
-	parseUrlService adapter.APIParseUrlService
+	parseUrlService adapter.ParseUrlService
 }
 
 func (r *readerService) ParseUrls(ctx context.Context, parseUrlsForm form.ParseUrlsForm) ([]model.Item, error, validate.Errors) {
