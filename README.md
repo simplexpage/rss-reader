@@ -19,6 +19,7 @@ Run `make start` to start REST API. All containers will start automatically.
 
 1. Create `.env` file in the root of the project and copy the contents of the `.env-local` file into it and make the necessary changes as needed.
 2. Also project has a `config` folder, which contains configuration files. You need to create a `сonfig.yml` file in the root of the project and copy the contents of the `config.yml.example` file and make the necessary changes as needed.
+3. Run `make start`
 
 ## How to stop it
 
@@ -31,12 +32,6 @@ Run `make rebuild` to rebuild REST API. All containers will rebuild automaticall
 ## How to run tests
 
 Run `make test` to run tests.
-
-## .env example DEV
-
-```
-HTTP_RSS_PORT=8082
-```
 
 ## Parse urls
 
